@@ -4,6 +4,8 @@ extern crate gl;
 use glfw::{Action, Context, Glfw, Key};
 use gl::{types::*, ClearColor};
 
+mod shaders;
+
 
 type Vertex = [f32; 3];
 
@@ -29,8 +31,10 @@ const FRAG_SHADER: &str = r#"#version 330 core
 
 fn main() {
    use glfw::fail_on_errors;
-let mut glfw = glfw::init(fail_on_errors!()).unwrap();
-
+    let mut glfw = glfw::init(fail_on_errors!()).unwrap();
+    let shad = shaders::shaderprogram::ShaderProgram{
+        shaderProgram: 1,
+    };
     // Create a windowed mode window and its OpenGL context
     let name = "C.A.S";
     let (mut window, events) = glfw.create_window(1900, 1100, name,
