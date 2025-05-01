@@ -33,7 +33,7 @@ fn main() {
    use glfw::fail_on_errors;
     let mut glfw = glfw::init(fail_on_errors!()).unwrap();
     let shad = shaders::shaderprogram::ShaderProgram{
-        shaderProgram: 1,
+        // shader_program: 1,
     };
     // Create a windowed mode window and its OpenGL context
     let name = "C.A.S";

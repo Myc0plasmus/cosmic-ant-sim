@@ -1,4 +1,7 @@
 use gl::types::GLuint;
+use std::fs::File;
+use std::io::{self, Read};
+use std::path::Path;
 
 pub struct ShaderProgram {
    shader_program : GLuint,
@@ -13,5 +16,12 @@ impl ShaderProgram {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
         Ok(buffer)
+    }
+
+    fn loadShader(shader_type : GLenum, file_name: &str) -> GLuint {
+        unsafe {
+            let mut shader : GLuint = gl::CreateShader(shader_type);
+            gl::ShaderSource();
+        }
     }
 }
