@@ -21,7 +21,8 @@ impl ShaderProgram {
     fn loadShader(shader_type : GLenum, file_name: &str) -> GLuint {
         unsafe {
             let mut shader : GLuint = gl::CreateShader(shader_type);
-            gl::ShaderSource();
+            let shader_source : GLchar = read_file_bytes(file_name);
+            gl::ShaderSource(shader, 1, shader_source, null() );
         }
     }
 }
