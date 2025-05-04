@@ -1,30 +1,27 @@
-/*
-Niniejszy program jest wolnym oprogramowaniem; możesz go
-rozprowadzać dalej i / lub modyfikować na warunkach Powszechnej
-Licencji Publicznej GNU, wydanej przez Fundację Wolnego
-Oprogramowania - według wersji 2 tej Licencji lub(według twojego
-wyboru) którejś z późniejszych wersji.
+#[derive(Clone)]
+pub struct ModelParams {
+    pub vertex_count: i32,
+    pub vertices: *const f32,
+    pub normals: *const f32,
+    pub vertex_normals: *const f32,
+    pub tex_coords: *const f32,
+    pub colors: *const f32
+}
 
-Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on
-użyteczny - jednak BEZ JAKIEJKOLWIEK GWARANCJI, nawet domyślnej
-gwarancji PRZYDATNOŚCI HANDLOWEJ albo PRZYDATNOŚCI DO OKREŚLONYCH
-ZASTOSOWAŃ.W celu uzyskania bliższych informacji sięgnij do
-Powszechnej Licencji Publicznej GNU.
+pub trait Model{
+    fn read_model_params(&self) -> &ModelParams;
 
-Z pewnością wraz z niniejszym programem otrzymałeś też egzemplarz
-Powszechnej Licencji Publicznej GNU(GNU General Public License);
-jeśli nie - napisz do Free Software Foundation, Inc., 59 Temple
-Place, Fifth Floor, Boston, MA  02110 - 1301  USA
-*/
+    fn get_model_params(&self) -> &mut ModelParams;
 
-#include "model.h"
+    fn draw_solid(&self, smooth: bool);
 
-namespace Models {
-	void Model::drawWire(bool smooth) {
-		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    fn draw_wire(&self, smooth: Option<bool>) {
+        let smooth = smooth.unwrap_or(false);
+        unsafe {
+            gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+            self.draw_solid(smooth);
+            gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
+        }
+    }
 
-		drawSolid(smooth);
-
-		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-	}
 }
