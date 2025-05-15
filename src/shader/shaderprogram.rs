@@ -17,9 +17,11 @@ pub struct ShaderProgram {
 }
 
 impl ShaderProgram {
-    
+    pub fn get_shader_program(&self) -> GLuint {
+        self.shader_program
+    }
 
-    pub fn new(vertex_path: &str, geometry_path: Option<&str>, fragment_path: &str) -> ShaderProgram {
+    pub fn new(vertex_path: &str, geometry_path: Option<&str>, fragment_path: &str) -> Self {
         let vertex_shader = ShaderProgram::loadShader( gl::VERTEX_SHADER, vertex_path);
         let geometry_shader = geometry_path.map(|path| ShaderProgram::loadShader(gl::GEOMETRY_SHADER, path));
         let fragment_shader = ShaderProgram::loadShader(gl::FRAGMENT_SHADER, fragment_path);
@@ -46,10 +48,10 @@ impl ShaderProgram {
         }
 
         ShaderProgram {
-            shader_program,
-            vertex_shader,
-            geometry_shader,
-            fragment_shader,
+            shader_program: shader_program,
+            vertex_shader: vertex_shader,
+            geometry_shader: geometry_shader,
+            fragment_shader: fragment_shader,
         }
     }
 

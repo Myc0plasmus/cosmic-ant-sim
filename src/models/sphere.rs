@@ -1,3 +1,5 @@
+use std::ptr;
+
 use gl::types::*;
 use nalgebra_glm::round;
 use nalgebra_glm as glm;
@@ -11,6 +13,24 @@ pub struct Sphere {
     internal_vertices: Vec<glm::Vec4>, 
     internal_face_normals: Vec<glm::Vec4>, 
     internal_vertex_normals: Vec<glm::Vec4>, 
+
+}
+
+fn intertwine_vectors(model_params: &ModelParams, vertices: & Vec<glm::Vec4>, normals: &Vec<glm::Vec4>, result: &mut Vec<f32>)  {
+
+    for i in 0..model_params.vertex_count {
+        // Intertwining vertex and normal data into the result array
+        result.push(vertices[i as usize].x);       // Vertex x
+        result.push(vertices[i as usize].y);       // Vertex y
+        result.push(vertices[i as usize].z);       // Vertex z
+        result.push(vertices[i as usize].w);       // Vertex w
+
+        result.push(normals[i as usize].x);       // Vertex x
+        result.push(normals[i as usize].y);       // Vertex y
+        result.push(normals[i as usize].z);       // Vertex z
+        result.push(normals[i as usize].w);       // Vertex w
+    }
+
 }
 
 impl Model for Sphere {
@@ -18,32 +38,64 @@ impl Model for Sphere {
         &self.model_params
     }
 
-    fn get_model_params(&self) -> &mut ModelParams{
+    fn get_model_params(&mut self) -> &mut ModelParams{
         &mut self.model_params
     }
 
     fn draw_solid(&self, smooth: bool) {
+   
+        let (mut vao, mut vbo) = (0, 0);
         unsafe {
+            let mut result_vector: Vec<f32> = Vec::new();
+            intertwine_vectors(&self.model_params,&self.internal_vertices, &self.internal_vertex_normals, &mut result_vector);
+
+            gl::GenVertexArrays(1, &mut vao);
+            gl::GenBuffers(1, &mut vbo);
+
+            gl::BindVertexArray(vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                ((result_vector.len() as usize) * std::mem::size_of::<f32>()) as _,
+                result_vector.as_ptr() as *const _,
+                gl::STATIC_DRAW,
+            );
+
+            // Position attribute
+            gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, ptr::null());
             gl::EnableVertexAttribArray(0);
+
+            // Normal attribute
+            gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, (4 * std::mem::size_of::<f32>()) as *const _);
             gl::EnableVertexAttribArray(1);
-            gl::EnableVertexAttribArray(2);
 
-            gl::VertexAttribPointer(0,4,GLfloat,false,0,&self.model_params.vertices);
-            if(smooth) {
-                gl::VertexAttribPointer(1,4,GLfloat,false,0,&self.model_params.normals);
-            } else {
-                gl::VertexAttribPointer(1,4,GLfloat,false,0,&self.model_params.vertex_normals);
-            }
-            gl::VertexAttribPointer(2,4,GLfloat,false,0,&self.model_params.tex_coords);
-
+            gl::BindVertexArray(vao);
             gl::DrawArrays(gl::TRIANGLES,0,self.model_params.vertex_count);
 
-            gl::DisableVertexAttribArray(0);
-            gl::DisableVertexAttribArray(1);
-            gl::DisableVertexAttribArray(2);
-
-
         }
+         
+
+        // unsafe {
+        //     gl::EnableVertexAttribArray(0);
+        //     gl::EnableVertexAttribArray(1);
+        //     gl::EnableVertexAttribArray(2);
+        //
+        //     gl::VertexAttribPointer(0,4,gl::FLOAT,gl::FALSE,0,self.model_params.vertices as _);
+        //     if(smooth) {
+        //         gl::VertexAttribPointer(1,4,gl::FLOAT,gl::FALSE,0,self.model_params.normals as _);
+        //     } else {
+        //         gl::VertexAttribPointer(1,4,gl::FLOAT,gl::FALSE,0,self.model_params.vertex_normals as _);
+        //     }
+        //     gl::VertexAttribPointer(2,4,gl::FLOAT,gl::FALSE,0,self.model_params.tex_coords as _);
+        //
+        //     gl::DrawArrays(gl::TRIANGLES,0,self.model_params.vertex_count);
+        //
+        //     gl::DisableVertexAttribArray(0);
+        //     gl::DisableVertexAttribArray(1);
+        //     gl::DisableVertexAttribArray(2);
+        //
+        //
+        // }
     }
 }
 
@@ -52,11 +104,33 @@ impl Sphere {
         r: Option<f32>,
         main_divs: Option<f32>,
         tube_divs: Option<f32>
-    ){
+    ) -> Self{
         let r = r.unwrap_or(1.0);
         let main_divs = main_divs.unwrap_or(12.0);
         let tube_divs = tube_divs.unwrap_or(12.0);
-        self.build_sphere(r,main_divs,tube_divs);
+        
+                // Create an empty Sphere to populate
+        let mut sphere = Sphere {
+            model_params: ModelParams {
+                vertex_count: 0,
+                vertices: std::ptr::null_mut(),
+                flat_vertices: Vec::new(),
+                normals: std::ptr::null_mut(),
+                vertex_normals: std::ptr::null_mut(),
+                tex_coords: std::ptr::null_mut(),
+                colors: std::ptr::null_mut(),
+                // vao: 0,
+                // vbo_positions: 0,
+                // vbo_normals: 0,
+            },
+            internal_vertices: Vec::new(),
+            internal_face_normals: Vec::new(),
+            internal_vertex_normals: Vec::new(),
+        };
+
+        sphere.build_sphere(r, main_divs, tube_divs);
+        sphere
+
     }
 
     fn d2r(&self, deg: f32) -> f32 {
@@ -67,22 +141,22 @@ impl Sphere {
     fn generate_sphere_point(
         &self,
         r: f32,
-        mut alpha: f32,
-        mut beta: f32
+        input_alpha: f32,
+        input_beta: f32
     ) -> glm::Vec4 {
-        alpha = self.d2r(alpha);
-        beta = self.d2r(beta);
-        glm::vec4(r*alpha.cos()*beta.cos(), r*alpha.cos()*beta.sin(), r*alpha.sin()*beta.sin(), 1.0)
+        let alpha = self.d2r(input_alpha);
+        let beta = self.d2r(input_beta);
+        glm::vec4(r*alpha.cos()*beta.cos(), r*alpha.cos()*beta.sin(), r*alpha.sin(), 1.0)
     }
 
     fn compute_vertex_normal(
         &self,
-        mut alpha: f32,
-        mut beta: f32
+        input_alpha: f32,
+        input_beta: f32
     ) -> glm::Vec4 {
-        alpha = self.d2r(alpha);
-        beta = self.d2r(beta);
-        glm::vec4(alpha.cos()*beta.cos(), alpha.cos()*beta.sin(), beta.sin(), 1.0)
+        let alpha = self.d2r(input_alpha);
+        let beta = self.d2r(input_beta);
+        glm::vec4(alpha.cos()*beta.cos(), alpha.cos()*beta.sin(), alpha.sin(), 0.0)
     }
 
     fn compute_face_normal(&self, face: &Vec<glm::Vec4>) -> glm::Vec4 {
@@ -115,10 +189,10 @@ impl Sphere {
 
         *face_normal = self.compute_face_normal(&vertices);
 
-        vertex_normals.push(self.generate_sphere_point(r,alpha,beta));
-        vertex_normals.push(self.generate_sphere_point(r,alpha+step_alpha,beta));
-        vertex_normals.push(self.generate_sphere_point(r,alpha+step_alpha,beta+step_beta));
-        vertex_normals.push(self.generate_sphere_point(r,alpha,beta+step_beta));
+        vertex_normals.push(self.compute_vertex_normal(alpha,beta));
+        vertex_normals.push(self.compute_vertex_normal(alpha+step_alpha,beta));
+        vertex_normals.push(self.compute_vertex_normal(alpha+step_alpha,beta+step_beta));
+        vertex_normals.push(self.compute_vertex_normal(alpha,beta+step_beta));
     }
 
     fn build_sphere(
@@ -152,13 +226,13 @@ impl Sphere {
                 self.internal_vertices.push(face[2]);
                 self.internal_vertices.push(face[3]);
 
-                self.internal_vertex_normals.push(face[0]);
-                self.internal_vertex_normals.push(face[1]);
-                self.internal_vertex_normals.push(face[2]);
+                self.internal_vertex_normals.push(face_vertex_normals[0]);
+                self.internal_vertex_normals.push(face_vertex_normals[1]);
+                self.internal_vertex_normals.push(face_vertex_normals[2]);
 
-                self.internal_vertex_normals.push(face[0]);
-                self.internal_vertex_normals.push(face[2]);
-                self.internal_vertex_normals.push(face[3]);
+                self.internal_vertex_normals.push(face_vertex_normals[0]);
+                self.internal_vertex_normals.push(face_vertex_normals[2]);
+                self.internal_vertex_normals.push(face_vertex_normals[3]);
 
                 for i in (0..6) {
                     self.internal_face_normals.push(normal);
@@ -166,14 +240,35 @@ impl Sphere {
 
             }
         }
-        self.model_params.vertices = self.internal_vertices.as_ptr() as *mut f32;
-        self.model_params.normals = self.internal_face_normals.as_ptr() as *mut f32;
-        self.model_params.vertex_normals = self.internal_vertex_normals.as_ptr() as *mut f32;
+
+        // self.model_params.flat_vertices = flatten_vec4(&self.internal_vertices);
+        self.model_params.vertices = self.internal_vertices.as_ptr() as *const _;
+        self.model_params.normals = self.internal_face_normals.as_ptr() as *const _;
+        self.model_params.vertex_normals = self.internal_vertex_normals.as_ptr() as *const _;
         self.model_params.tex_coords = self.model_params.vertex_normals;
         self.model_params.vertex_count = self.internal_vertices.len() as i32;
-        
+        // println!("flatten_vertices:");
+        // for (i, v) in self.model_params.flat_vertices.iter().enumerate() {
+        //     println!("param: {} with value: {}",i%4, v);
+        // }
+        println!("vertices:");
+        for (i, v) in self.internal_vertices.iter().enumerate() {
+            println!("Vertex {}: ({:.3}, {:.3}, {:.3}, {:.3})", i, v.x, v.y, v.z, v.w);
+        }
+        println!("normals:");
+        for (i, n) in self.internal_vertex_normals.iter().enumerate() {
+            println!("Normal {}: ({:.3}, {:.3}, {:.3}, {:.3})", i, n.x, n.y, n.z, n.w);
+        }
+
+        println!("VertexCount: {}",self.model_params.vertex_count);
     }
 
+}
+
+fn flatten_vec4(vecs: &Vec<glm::Vec4>) -> Vec<f32> {
+    vecs.iter()
+        .flat_map(|v| vec![v.x, v.y, v.z, v.w])
+        .collect()
 }
 
 

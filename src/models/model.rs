@@ -1,17 +1,20 @@
+use gl::types::*;
+
 #[derive(Clone)]
 pub struct ModelParams {
     pub vertex_count: i32,
-    pub vertices: *const f32,
-    pub normals: *const f32,
-    pub vertex_normals: *const f32,
-    pub tex_coords: *const f32,
-    pub colors: *const f32
+    pub flat_vertices: Vec<f32>,
+    pub vertices: *const gl::types::GLvoid,
+    pub normals: *const gl::types::GLvoid,
+    pub vertex_normals: *const gl::types::GLvoid,
+    pub tex_coords: *const gl::types::GLvoid,
+    pub colors: *const gl::types::GLvoid,
 }
 
 pub trait Model{
     fn read_model_params(&self) -> &ModelParams;
 
-    fn get_model_params(&self) -> &mut ModelParams;
+    fn get_model_params(&mut self) -> &mut ModelParams;
 
     fn draw_solid(&self, smooth: bool);
 
