@@ -14,6 +14,7 @@ use shader::shaderprogram::ShaderProgram;
 mod models;
 use models::sphere::Sphere;
 use models::cube::Cube;
+use models::shuttlebug::Shuttlebug;
 use models::model::*;
 mod utils;
 use utils::constants::*;
@@ -45,6 +46,11 @@ fn main() {
         None,
         "assets/shaders/f_constant.glsl",
     );
+    let spSimple = ShaderProgram::new(
+        "assets/shaders/v_simple.glsl", 
+        None,
+        "assets/shaders/f_simple.glsl",
+    );
     // let spColored = ShaderProgram::new(
     //     "assets/shaders/v_colored.glsl", 
     //     None,
@@ -66,43 +72,8 @@ fn main() {
 
     let mySphere : Sphere = Sphere::new(r, mainDivs, tubeDivs);
     let myCube : Cube = Cube::new();
+    let myShuttlebug : Shuttlebug = Shuttlebug::new();
 
-
-    // Vertex data for a cube
-    let vertices: [f32; 108] = [
-        // positions
-        -0.5, -0.5, -0.5,  0.5, -0.5, -0.5,  0.5,  0.5, -0.5,
-         0.5,  0.5, -0.5, -0.5,  0.5, -0.5, -0.5, -0.5, -0.5, // back face
-        -0.5, -0.5,  0.5,  0.5, -0.5,  0.5,  0.5,  0.5,  0.5,
-         0.5,  0.5,  0.5, -0.5,  0.5,  0.5, -0.5, -0.5,  0.5, // front face
-        -0.5,  0.5,  0.5, -0.5,  0.5, -0.5, -0.5, -0.5, -0.5,
-        -0.5, -0.5, -0.5, -0.5, -0.5,  0.5, -0.5,  0.5,  0.5, // left face
-         0.5,  0.5,  0.5,  0.5,  0.5, -0.5,  0.5, -0.5, -0.5,
-         0.5, -0.5, -0.5,  0.5, -0.5,  0.5,  0.5,  0.5,  0.5, // right face
-        -0.5, -0.5, -0.5,  0.5, -0.5, -0.5,  0.5, -0.5,  0.5,
-         0.5, -0.5,  0.5, -0.5, -0.5,  0.5, -0.5, -0.5, -0.5, // bottom face
-        -0.5,  0.5, -0.5,  0.5,  0.5, -0.5,  0.5,  0.5,  0.5,
-         0.5,  0.5,  0.5, -0.5,  0.5,  0.5, -0.5,  0.5, -0.5  // top face
-    ];
-
-    // Create VAO and VBO
-    // let (mut vao, mut vbo) = (0, 0);
-    // unsafe {
-    //     gl::GenVertexArrays(1, &mut vao);
-    //     gl::GenBuffers(1, &mut vbo);
-    //
-    //     gl::BindVertexArray(vao);
-    //     gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-    //     gl::BufferData(
-    //         gl::ARRAY_BUFFER,
-    //         (vertices.len() * std::mem::size_of::<f32>()) as _,
-    //         vertices.as_ptr() as *const _,
-    //         gl::STATIC_DRAW,
-    //     );
-    //
-    //     gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * 4, ptr::null());
-    //     gl::EnableVertexAttribArray(0);
-    // }
 
     // Shaders
     // let vertex_shader_src = CString::new(
@@ -177,31 +148,25 @@ fn main() {
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             // gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            // gl::FrontFace(gl::CW);
-            // gl::UseProgram(shader_program);
-        // }
             spLambert.use_program();
-            // spLambert.use_program();
-        // unsafe {
+            // spSimple.use_program();
+
             let axis = glm::vec3(1.0, 1.0, 0.0); // Y axis
             M = glm::rotate(&M, PI+0.1, &axis);
             gl::UniformMatrix4fv(spLambert.get_uniform_location("P"),1,gl::FALSE,P.as_ptr());
             gl::UniformMatrix4fv(spLambert.get_uniform_location("V"),1,gl::FALSE,V.as_ptr());
             gl::UniformMatrix4fv(spLambert.get_uniform_location("M"),1,gl::FALSE,M.as_ptr());
             // gl::UniformMatrix4fv(spConstant.get_uniform_location("M"),1,gl::FALSE,M.as_ptr());
-            gl::Uniform4f(spLambert.get_uniform_location("color") as GLint,0.0,1.0,1.0,1.0);
+            gl::Uniform4f(spLambert.get_uniform_location("color") as GLint,0.0,1.0,1.0,1.0); 
 
-            // let mvp_location = gl::GetUniformLocation(spConstant.get_shader_program(), CString::new("mvp").unwrap().as_ptr());
-            // gl::UniformMatrix4fv(mvp_location, 1, gl::FALSE, mvp.as_ptr());
 
-            // gl::BindVertexArray(vao);
-            // gl::DrawArrays(gl::TRIANGLES, 0, 36);
         
         }
         
 
         // myCube.draw_solid(true);
         mySphere.draw_solid(true);
+        myShuttlebug.draw_solid(true);
         // mySphere.draw_wire(Some(true));
 
         // Swap front and back buffers
