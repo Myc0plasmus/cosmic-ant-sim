@@ -114,11 +114,11 @@ impl Sphere {
             model_params: ModelParams {
                 vertex_count: 0,
                 vertices: std::ptr::null_mut(),
-                flat_vertices: Vec::new(),
+                // flat_vertices: Vec::new(),
                 normals: std::ptr::null_mut(),
                 vertex_normals: std::ptr::null_mut(),
                 tex_coords: std::ptr::null_mut(),
-                colors: std::ptr::null_mut(),
+                // colors: std::ptr::null_mut(),
                 // vao: 0,
                 // vbo_positions: 0,
                 // vbo_normals: 0,
@@ -209,8 +209,8 @@ impl Sphere {
         self.internal_face_normals.clear();
         self.internal_vertex_normals.clear();
 
-        let mult_alpha: f32 = 180.0/tube_divs;
-        let mult_beta: f32 = 180.0/main_divs;
+        let mult_alpha: f32 = 360.0/tube_divs;
+        let mult_beta: f32 = 360.0/main_divs;
 
         for alpha_it in (0..tube_divs.round() as i32) {
             for beta_it in (0..main_divs.round() as i32) {
@@ -251,16 +251,16 @@ impl Sphere {
         // for (i, v) in self.model_params.flat_vertices.iter().enumerate() {
         //     println!("param: {} with value: {}",i%4, v);
         // }
-        println!("vertices:");
-        for (i, v) in self.internal_vertices.iter().enumerate() {
-            println!("Vertex {}: ({:.3}, {:.3}, {:.3}, {:.3})", i, v.x, v.y, v.z, v.w);
-        }
-        println!("normals:");
-        for (i, n) in self.internal_vertex_normals.iter().enumerate() {
-            println!("Normal {}: ({:.3}, {:.3}, {:.3}, {:.3})", i, n.x, n.y, n.z, n.w);
-        }
-
-        println!("VertexCount: {}",self.model_params.vertex_count);
+        // println!("vertices:");
+        // for (i, v) in self.internal_vertices.iter().enumerate() {
+        //     println!("Vertex {}: ({:.3}, {:.3}, {:.3}, {:.3})", i, v.x, v.y, v.z, v.w);
+        // }
+        // println!("normals:");
+        // for (i, n) in self.internal_vertex_normals.iter().enumerate() {
+        //     println!("Normal {}: ({:.3}, {:.3}, {:.3}, {:.3})", i, n.x, n.y, n.z, n.w);
+        // }
+        //
+        // println!("VertexCount: {}",self.model_params.vertex_count);
     }
 
 }
