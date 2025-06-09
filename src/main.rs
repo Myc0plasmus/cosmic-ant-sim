@@ -353,9 +353,9 @@ impl Renderer {
         let mainDivs:Option<f32> = Some(36.0);
         let tubeDivs:Option<f32> = Some(36.0);
 
-        let mySphere = Box::new(Sphere::new(r, mainDivs, tubeDivs));
-        let myCube = Box::new(Cube::new());
-        let myShuttlebug  = Box::new(Shuttlebug::new());
+        let mut mySphere = Box::new(Sphere::new(r, mainDivs, tubeDivs));
+        let mut myCube = Box::new(Cube::new());
+        let mut myShuttlebug  = Box::new(Shuttlebug::new());
 
 
 
@@ -372,7 +372,7 @@ impl Renderer {
 
         let mut M = glm::identity();
 
-        // M = glm::scale(&M, &glm::vec3(10.0,10.0,10.0));
+        // M = glm::scale(&M, &glm::vec3(5.0,5.0,5.0));
 
            
         let mut renderer = Renderer {M,V,P,shader: spLambert, models, zoom: 5.0};
@@ -390,7 +390,7 @@ impl Renderer {
         
     }
 
-    fn addModel(&mut self, name: impl Into<String>, model: Box<dyn Model>) {
+    fn addModel(&mut self, name: impl Into<String>, mut model: Box<dyn Model>) {
         self.models.insert(name.into(), model);
     }
 
@@ -413,14 +413,15 @@ impl Renderer {
 
         // Loop until the user closes the window
         unsafe {
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::ClearColor(1.0, 1.0, 1.0, 1.0);
             // gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             self.shader.use_program();
             // spSimple.use_program();
 
             let axis = glm::vec3(1.0, 1.0, 0.0); // Y axis
-            self.M = glm::rotate(&self.M, (PI)+0.01, &axis);
+
+            self.M = glm::rotate(&self.M, 0.01, &axis);
             // self.V = glm::rotate(&self.V, (PI)+0.01, &axis);
             gl::UniformMatrix4fv(self.shader.get_uniform_location("P"),1,gl::FALSE,self.P.as_ptr());
             gl::UniformMatrix4fv(self.shader.get_uniform_location("V"),1,gl::FALSE,self.V.as_ptr());
@@ -435,7 +436,22 @@ impl Renderer {
 
         // myCube.draw_solid(true);
         // self.models["ant"].draw_wire(Some(true));
-        self.models["sphere"].draw_wire(Some(true));
+        // self.models.get_mut("sphere").unwrap().draw_wire(Some(true));
+        
+
+        self.models.get_mut("ant").unwrap().draw_solid(true);
+
+        // unsafe {
+        //     let mut ms = glm::identity();
+        //     ms = glm::translate(&ms, &glm::vec3(3.0,0.0,0.0));
+        //     
+        //
+        //     gl::Uniform4f(self.shader.get_uniform_location("color") as GLint,1.0,1.0,1.0,1.0); 
+        //     gl::UniformMatrix4fv(self.shader.get_uniform_location("M"),1,gl::FALSE,ms.as_ptr());
+        //
+        // }
+        //
+        // self.models.get_mut("cube").unwrap().draw_solid(true);
 
         // myShuttlebug.draw_solid(true);
         // mySphere.draw_wire(Some(true));

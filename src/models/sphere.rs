@@ -13,6 +13,8 @@ pub struct Sphere {
     internal_vertices: Vec<glm::Vec4>, 
     internal_face_normals: Vec<glm::Vec4>, 
     internal_vertex_normals: Vec<glm::Vec4>, 
+    vao: GLuint,
+    vbo: GLuint
 
 }
 
@@ -42,60 +44,18 @@ impl Model for Sphere {
         &mut self.model_params
     }
 
-    fn draw_solid(&self, smooth: bool) {
+    fn draw_solid(&mut self, smooth: bool) {
    
-        let (mut vao, mut vbo) = (0, 0);
         unsafe {
-            let mut result_vector: Vec<f32> = Vec::new();
-            intertwine_vectors(&self.model_params,&self.internal_vertices, &self.internal_vertex_normals, &mut result_vector);
 
-            gl::GenVertexArrays(1, &mut vao);
-            gl::GenBuffers(1, &mut vbo);
-
-            gl::BindVertexArray(vao);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-            gl::BufferData(
-                gl::ARRAY_BUFFER,
-                ((result_vector.len() as usize) * std::mem::size_of::<f32>()) as _,
-                result_vector.as_ptr() as *const _,
-                gl::STATIC_DRAW,
-            );
-
-            // Position attribute
-            gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, ptr::null());
-            gl::EnableVertexAttribArray(0);
-
-            // Normal attribute
-            gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, (4 * std::mem::size_of::<f32>()) as *const _);
-            gl::EnableVertexAttribArray(1);
-
-            gl::BindVertexArray(vao);
+            gl::BindVertexArray(self.vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
             gl::DrawArrays(gl::TRIANGLES,0,self.model_params.vertex_count);
 
         }
          
 
-        // unsafe {
-        //     gl::EnableVertexAttribArray(0);
-        //     gl::EnableVertexAttribArray(1);
-        //     gl::EnableVertexAttribArray(2);
-        //
-        //     gl::VertexAttribPointer(0,4,gl::FLOAT,gl::FALSE,0,self.model_params.vertices as _);
-        //     if(smooth) {
-        //         gl::VertexAttribPointer(1,4,gl::FLOAT,gl::FALSE,0,self.model_params.normals as _);
-        //     } else {
-        //         gl::VertexAttribPointer(1,4,gl::FLOAT,gl::FALSE,0,self.model_params.vertex_normals as _);
-        //     }
-        //     gl::VertexAttribPointer(2,4,gl::FLOAT,gl::FALSE,0,self.model_params.tex_coords as _);
-        //
-        //     gl::DrawArrays(gl::TRIANGLES,0,self.model_params.vertex_count);
-        //
-        //     gl::DisableVertexAttribArray(0);
-        //     gl::DisableVertexAttribArray(1);
-        //     gl::DisableVertexAttribArray(2);
-        //
-        //
-        // }
+
     }
 }
 
@@ -126,9 +86,37 @@ impl Sphere {
             internal_vertices: Vec::new(),
             internal_face_normals: Vec::new(),
             internal_vertex_normals: Vec::new(),
+            vao: 0,
+            vbo: 0
         };
 
         sphere.build_sphere(r, main_divs, tube_divs);
+
+        let mut result_vector: Vec<f32> = Vec::new();
+        intertwine_vectors(&sphere.model_params,&sphere.internal_vertices, &sphere.internal_vertex_normals, &mut result_vector);
+
+        unsafe{
+            gl::GenVertexArrays(1, &mut sphere.vao);
+            gl::GenBuffers(1, &mut sphere.vbo);
+
+            gl::BindVertexArray(sphere.vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, sphere.vbo);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                ((result_vector.len() as usize) * std::mem::size_of::<f32>()) as _,
+                result_vector.as_ptr() as *const _,
+                gl::STATIC_DRAW,
+            );
+
+            // Position attribute
+            gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, ptr::null());
+            gl::EnableVertexAttribArray(0);
+
+            // Normal attribute
+            gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, (4 * std::mem::size_of::<f32>()) as *const _);
+            gl::EnableVertexAttribArray(1);
+        }
+
         sphere
 
     }

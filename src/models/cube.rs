@@ -1,4 +1,5 @@
 use super::model::*;
+use gl::types::GLuint;
 use nalgebra_glm as glm;
 use std::ptr;
 
@@ -247,6 +248,9 @@ pub const CUBE_TEX_COORDS: [f32; CUBE_VERTEX_COUNT*2 ] = [
 
 pub struct Cube {
     pub model_params: ModelParams,
+    vao: GLuint,
+    vbo: GLuint
+
 
 }
 
@@ -286,31 +290,13 @@ impl Model for Cube {
         &mut self.model_params
     }
 
-    fn draw_solid(&self, smooth: bool) {
-        let (mut vao, mut vbo) = (0, 0);
+    fn draw_solid(&mut self, smooth: bool) {
         unsafe {
 
-            gl::GenVertexArrays(1, &mut vao);
-            gl::GenBuffers(1, &mut vbo);
 
-            gl::BindVertexArray(vao);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-            gl::BufferData(
-                gl::ARRAY_BUFFER,
-                (CUBE_VERTICES.len() * 2 * std::mem::size_of::<f32>()) as _,
-                intertwine_arrays(&CUBE_VERTICES, &CUBE_VERTEX_NORMALS).as_ptr() as *const _,
-                gl::STATIC_DRAW,
-            );
+            gl::BindVertexArray(self.vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
 
-            // Position attribute
-            gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, ptr::null());
-            gl::EnableVertexAttribArray(0);
-
-            // Normal attribute
-            gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, (4 * std::mem::size_of::<f32>()) as *const _);
-            gl::EnableVertexAttribArray(1);
-    
-            gl::BindVertexArray(vao);
             gl::DrawArrays(gl::TRIANGLES,0,self.model_params.vertex_count);
 
         }
@@ -331,7 +317,30 @@ impl Cube {
                 // vbo_positions: 0,
                 // vbo_normals: 0,
             },
+            vao: 0,
+            vbo: 0
        };
+       unsafe {
+            gl::GenVertexArrays(1, &mut cube.vao);
+            gl::GenBuffers(1, &mut cube.vbo);
+
+            gl::BindVertexArray(cube.vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, cube.vbo);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                (CUBE_VERTICES.len() * 2 * std::mem::size_of::<f32>()) as _,
+                intertwine_arrays(&CUBE_VERTICES, &CUBE_VERTEX_NORMALS).as_ptr() as *const _,
+                gl::STATIC_DRAW,
+            );
+
+            // Position attribute
+            gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, ptr::null());
+            gl::EnableVertexAttribArray(0);
+
+            // Normal attribute
+            gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, (8 * std::mem::size_of::<f32>()) as _, (4 * std::mem::size_of::<f32>()) as *const _);
+            gl::EnableVertexAttribArray(1);
+       }
        cube
    }
 }
