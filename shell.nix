@@ -8,6 +8,8 @@ mkShell {
 
   buildInputs = [
     pkg-config
+    libxkbcommon
+
     fontconfig
     freetype
     expat
@@ -22,6 +24,9 @@ mkShell {
     xorg.libXcursor
     xorg.libXi
     # Add other dependencies your project might need
+
+    wayland
+    wayland-protocols
   ];
   shellHook = ''
     export LIBGL_DRIVERS_PATH=${pkgs.mesa.drivers}
@@ -31,6 +36,7 @@ mkShell {
       pkgs.xorg.libXrandr
       pkgs.xorg.libXi
       pkgs.libGL
+      pkgs.libxkbcommon
       pkgs.glfw
     ]}
   '';
