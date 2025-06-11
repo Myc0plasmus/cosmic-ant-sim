@@ -9,10 +9,13 @@ layout(location = 1) in vec4 normal;
 
 out vec3 FragPos;
 out vec3 Normal;
+layout(location = 2) in vec2 texCoord;
+out vec2 TexCoord;
 
 void main(void) {
     mat4 MV = V * M;
     FragPos = vec3(MV * vertex); // position in camera space
     Normal = mat3(transpose(inverse(MV))) * normal.xyz; // transformed normal
     gl_Position = P * MV * vertex;
+    TexCoord = texCoord;
 }

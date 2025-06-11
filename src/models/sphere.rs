@@ -3,6 +3,7 @@ use std::ptr;
 use gl::types::*;
 use nalgebra_glm::round;
 use nalgebra_glm as glm;
+use crate::shader::shaderprogram::ShaderProgram;
 use crate::utils::constants::*;
 use crate::utils::vec_utils::*;
 use super::model::*;
@@ -44,7 +45,7 @@ impl Model for Sphere {
         &mut self.model_params
     }
 
-    fn draw_solid(&mut self, smooth: bool) {
+    fn draw_solid(&mut self, smooth: bool, shader: &ShaderProgram) {
    
         unsafe {
 

@@ -125,6 +125,8 @@ impl ApplicationHandler for App {
 
         self.renderer.get_or_insert_with(|| Renderer::new(&gl_config.display()));
 
+
+
         // Try setting vsync.
         if let Err(res) = gl_surface
             .set_swap_interval(gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
@@ -353,13 +355,6 @@ impl Renderer {
         let mainDivs:Option<f32> = Some(36.0);
         let tubeDivs:Option<f32> = Some(36.0);
 
-        let mut mySphere = Box::new(Sphere::new(r, mainDivs, tubeDivs));
-        let mut myCube = Box::new(Cube::new());
-        let mut myShuttlebug  = Box::new(Shuttlebug::new());
-
-
-
-
         let mut fov: f32 = glm::radians(&glm::vec1(100.0)).x;
         let aspect = 1900.0 / 1100.0;
         let mut P: glm::Mat4 = glm::perspective(aspect,fov,1.0,50.0);
@@ -374,8 +369,12 @@ impl Renderer {
 
         // M = glm::scale(&M, &glm::vec3(5.0,5.0,5.0));
 
+        let mut mySphere = Box::new(Sphere::new(r, mainDivs, tubeDivs));
+        let mut myCube = Box::new(Cube::new());
+        let mut myShuttlebug  = Box::new(Shuttlebug::new());
+        let mut renderer = Renderer {M,V,P,shader: spSimple, models, zoom: 5.0};
+
            
-        let mut renderer = Renderer {M,V,P,shader: spLambert, models, zoom: 5.0};
         renderer.addModel("cube", myCube);
         renderer.addModel("sphere",mySphere);
         renderer.addModel("ant",myShuttlebug);
@@ -413,7 +412,8 @@ impl Renderer {
 
         // Loop until the user closes the window
         unsafe {
-            gl::ClearColor(1.0, 1.0, 1.0, 1.0);
+            gl::ClearColor(0.5, 0.5, 0.5, 1.0);
+
             // gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             self.shader.use_program();
@@ -427,7 +427,9 @@ impl Renderer {
             gl::UniformMatrix4fv(self.shader.get_uniform_location("V"),1,gl::FALSE,self.V.as_ptr());
             gl::UniformMatrix4fv(self.shader.get_uniform_location("M"),1,gl::FALSE,self.M.as_ptr());
             // gl::UniformMatrix4fv(spConstant.get_uniform_location("M"),1,gl::FALSE,M.as_ptr());
-            gl::Uniform4f(self.shader.get_uniform_location("color") as GLint,0.0,1.0,1.0,1.0); 
+            gl::Uniform4f(self.shader.get_uniform_location("color") as GLint,1.0,1.0,1.0,1.0); 
+
+            // gl::Uniform1i(self.shader.get_uniform_location("baseColorTexture"), 0);
 
 
         
@@ -439,7 +441,7 @@ impl Renderer {
         // self.models.get_mut("sphere").unwrap().draw_wire(Some(true));
         
 
-        self.models.get_mut("ant").unwrap().draw_solid(true);
+        self.models.get_mut("ant").unwrap().draw_solid(false,&self.shader);
 
         // unsafe {
         //     let mut ms = glm::identity();

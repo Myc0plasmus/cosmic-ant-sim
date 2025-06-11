@@ -1,3 +1,5 @@
+use crate::shader::shaderprogram::ShaderProgram;
+
 use super::model::*;
 use gl::types::GLuint;
 use nalgebra_glm as glm;
@@ -290,7 +292,7 @@ impl Model for Cube {
         &mut self.model_params
     }
 
-    fn draw_solid(&mut self, smooth: bool) {
+    fn draw_solid(&mut self, smooth: bool, shader: &ShaderProgram) {
         unsafe {
 
 
