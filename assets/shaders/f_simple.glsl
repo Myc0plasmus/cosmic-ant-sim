@@ -6,35 +6,44 @@ in vec2 TexCoord;
 
 out vec4 pixelColor;
 
-uniform vec3 lightPos = vec3(0.0, 0.0, 2.0); 
+uniform vec3 lightPos1 = vec3(0.0, 0.0, 2.0);   // positional light
+uniform vec3 lightDir2 = vec3(0.5, 0.0, -1.0);  // directional light
+
 uniform sampler2D baseColorTexture;
 uniform sampler2D normalTexture;
 uniform sampler2D emissiveTexture;
 
 void main(void) {
-    // Base color
     vec3 baseColor = texture(baseColorTexture, TexCoord).rgb;
 
-    // Normals from normal map (in tangent space)
+    // Normal mapping
     vec3 normalMap = texture(normalTexture, TexCoord).rgb;
-    vec3 norm = normalize(normalMap * 2.0 - 1.0); // unpack from [0,1] to [-1,1]
+    vec3 norm = normalize(normalMap * 2.0 - 1.0); // unpack normal
 
-    // Lighting
-    vec3 lightDir = normalize(lightPos - FragPos);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * baseColor;
+    // ---- Light 1: Point light ----
+    vec3 lightDir1 = normalize(lightPos1 - FragPos);
+    float diff1 = max(dot(norm, lightDir1), 0.0);
+    vec3 diffuse1 = diff1 * baseColor;
 
+    vec3 reflectDir1 = reflect(-lightDir1, norm);
+    vec3 viewDir = normalize(-FragPos); // assumes camera at origin
+    float spec1 = pow(max(dot(viewDir, reflectDir1), 0.0), 16.0);
+    vec3 specular1 = 0.5 * spec1 * vec3(1.0);
+
+    // ---- Light 2: Directional (sun) ----
+    vec3 lightDir2Norm = normalize(-lightDir2); // sun shines *from* this direction
+    float diff2 = max(dot(norm, lightDir2Norm), 0.0);
+    vec3 diffuse2 = diff2 * baseColor;
+
+    vec3 reflectDir2 = reflect(-lightDir2Norm, norm);
+    float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), 16.0);
+    vec3 specular2 = 0.5 * spec2 * vec3(1.0);
+
+    // Ambient and emissive
     vec3 ambient = 0.2 * baseColor;
-
-    vec3 viewDir = normalize(-FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
-    vec3 specular = 0.5 * spec * vec3(1.0);
-
-    // Emissive color
     vec3 emissive = texture(emissiveTexture, TexCoord).rgb;
 
-    // Final color
-    vec3 result = ambient + diffuse + specular + emissive;
+    // Final lighting
+    vec3 result = ambient + diffuse1 + diffuse2 + specular1 + specular2 + emissive;
     pixelColor = vec4(result, 1.0);
 }

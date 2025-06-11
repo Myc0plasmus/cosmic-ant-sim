@@ -20,9 +20,9 @@ void main(void) {
     gl_Position=P*V*M*vertex;
 
     mat4 G=mat4(inverse(transpose(mat3(M))));
-    vec4 n=normalize(V*G*normal);
+    vec4 n=normalize(G*normal);
 
-	vec4 lightDir=normalize(vec4(0.0,0.0,1.0,0));
+	vec4 lightDir=normalize(vec4(5.0,5.0,0.0,0));
     float nl=clamp(dot(n,lightDir),0,1);
 
     i_color=vec4(color.rgb*nl,color.a);

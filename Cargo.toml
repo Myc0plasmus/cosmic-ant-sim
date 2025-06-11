@@ -16,3 +16,4 @@ egui = "0.31.1"
 egui-winit = "0.31.1"
 glutin-winit = "0.5"
 image = { version = "0.25", features = ["png", "jpeg"] }
+rand = "0.9.1"
