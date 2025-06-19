@@ -2,11 +2,7 @@ use std::ptr;
 
 use gl::types::*;
 use gltf::buffer::Data;
-use gltf::Document;
-use nalgebra_glm as glm;
 use crate::shader::shaderprogram::ShaderProgram;
-use crate::utils::constants::*;
-use crate::utils::vec_utils::*;
 use super::model::*;
 
 use image::GenericImageView;

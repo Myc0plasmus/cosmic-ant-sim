@@ -1,10 +1,9 @@
 use glutin::prelude::GlDisplay;
-use rand::{rng, thread_rng, Rng};
+use rand::{rng, Rng};
 use gl::types::*;
 use std::collections::HashMap;
-use std::ffi::{CStr, CString};
+use std::ffi::{CString};
 use std::path::Path;
-use std::time::Instant;
 
 use image::GenericImageView;
 use nalgebra_glm as glm;
@@ -12,14 +11,14 @@ use crate::shader::shaderprogram::ShaderProgram;
 use crate::models::{cube::Cube, model::*, shuttlebug::Shuttlebug, sphere::Sphere};
 
 pub struct Renderer {
-    M: glm::Mat4,
-    V: glm::Mat4,
-    P: glm::Mat4,
+    m: glm::Mat4,
+    v: glm::Mat4,
+    p: glm::Mat4,
     shader: ShaderProgram,
     lambert: ShaderProgram,
     models: HashMap<String, Box<dyn Model>>,
     pub zoom: f32,
-    dirtTexture: GLuint,
+    dirt_texture: GLuint,
     random_pos_vector: Vec<glm::Vec3>, 
     pub speed: f32
 
@@ -32,23 +31,23 @@ impl Renderer {
             gl_display.get_proc_address(symbol.as_c_str()).cast()
         });
 
-        let spLambert = ShaderProgram::new(
-            "assets/shaders/v_lambert.glsl", 
-            None,
-            "assets/shaders/f_lambert.glsl",
-        );
-        let spConstant = ShaderProgram::new(
-            "assets/shaders/v_constant.glsl", 
-            None,
-            "assets/shaders/f_constant.glsl",
-        );
-        let spSimple = ShaderProgram::new(
+        // let sp_lambert = ShaderProgram::new(
+        //     "assets/shaders/v_lambert.glsl", 
+        //     None,
+        //     "assets/shaders/f_lambert.glsl",
+        // );
+        // let sp_constant = ShaderProgram::new(
+        //     "assets/shaders/v_constant.glsl", 
+        //     None,
+        //     "assets/shaders/f_constant.glsl",
+        // );
+        let sp_simple = ShaderProgram::new(
             "assets/shaders/v_simple.glsl", 
             None,
             "assets/shaders/f_simple.glsl",
         );
 
-        let mut models = HashMap::new();
+        let models = HashMap::new();
         
         // let spColored = ShaderProgram::new(
         //     "assets/shaders/v_colored.glsl", 
@@ -60,48 +59,48 @@ impl Renderer {
         //     None,
         //     "assets/shaders/f_textured.glsl",
         // );
-        let spLambertTextured = ShaderProgram::new(
+        let sp_lambert_textured = ShaderProgram::new(
             "assets/shaders/v_lamberttextured.glsl", 
             None,
             "assets/shaders/f_lamberttextured.glsl",
         );
         let r:Option<f32> = Some(0.3);
-        let mainDivs:Option<f32> = Some(36.0);
-        let tubeDivs:Option<f32> = Some(36.0);
+        let main_divs:Option<f32> = Some(36.0);
+        let tube_divs:Option<f32> = Some(36.0);
 
-        let mut fov: f32 = glm::radians(&glm::vec1(100.0)).x;
+        let fov: f32 = glm::radians(&glm::vec1(100.0)).x;
         let aspect = 1900.0 / 1100.0;
-        let mut P: glm::Mat4 = glm::perspective(aspect,fov,1.0,50.0);
-        let mut eye = glm::vec3(0.0 ,0.0, -5.0);
-        let mut center = glm::vec3(0.0, 0.0, 0.0);
-        let mut up = glm::vec3(0.0, 1.0, 0.0);
-        let mut V: glm::Mat4 = glm::look_at(&eye, &center, &up);
+        let p: glm::Mat4 = glm::perspective(aspect,fov,1.0,50.0);
+        let eye = glm::vec3(0.0 ,0.0, -5.0);
+        let center = glm::vec3(0.0, 0.0, 0.0);
+        let up = glm::vec3(0.0, 1.0, 0.0);
+        let v: glm::Mat4 = glm::look_at(&eye, &center, &up);
         // V = glm::rotate(&V, 0.5*PI, &glm::vec3(0.0,1.0,0.0));
         // let mut M: glm::Mat4 = glm::Mat4::from_element(1.0);
 
-        let mut M = glm::identity();
+        let m = glm::identity();
 
         // M = glm::scale(&M, &glm::vec3(5.0,5.0,5.0));
 
-        let mut mySphere = Box::new(Sphere::new(r, mainDivs, tubeDivs));
-        let mut myCube = Box::new(Cube::new());
-        let mut myShuttlebug  = Box::new(Shuttlebug::new());
-        let mut renderer = Renderer {M,V,P,shader: spSimple, lambert: spLambertTextured, models, zoom: 5.0, dirtTexture: 0, speed: 0.0, random_pos_vector: Vec::new()};
-        renderer.generateRandomPos();
-        renderer.dirtTexture = renderer.load_texture("assets/textures/dirtTexture.png");
+        let my_sphere = Box::new(Sphere::new(r, main_divs, tube_divs));
+        let my_cube = Box::new(Cube::new());
+        let my_shuttlebug  = Box::new(Shuttlebug::new());
+        let mut renderer = Renderer {m,v,p,shader: sp_simple, lambert: sp_lambert_textured, models, zoom: 5.0, dirt_texture: 0, speed: 0.0, random_pos_vector: Vec::new()};
+        renderer.generate_random_pos();
+        renderer.dirt_texture = renderer.load_texture("assets/textures/dirtTexture.png");
         
            
-        renderer.addModel("cube", myCube);
-        renderer.addModel("sphere",mySphere);
-        renderer.addModel("ant",myShuttlebug);
+        renderer.add_model("cube", my_cube);
+        renderer.add_model("sphere",my_sphere);
+        renderer.add_model("ant",my_shuttlebug);
         renderer
     }
 
-    pub fn changeCameraZoom(&mut self) {
-        let mut eye = glm::vec3(0.0 ,0.0, -self.zoom);
-        let mut center = glm::vec3(0.0, 0.0, 0.0);
-        let mut up = glm::vec3(0.0, 1.0, 0.0);
-        self.V = glm::look_at(&eye, &center, &up);
+    pub fn change_camera_zoom(&mut self) {
+        let eye = glm::vec3(0.0 ,0.0, -self.zoom);
+        let center = glm::vec3(0.0, 0.0, 0.0);
+        let up = glm::vec3(0.0, 1.0, 0.0);
+        self.v = glm::look_at(&eye, &center, &up);
         
     }
 
@@ -146,13 +145,13 @@ impl Renderer {
 
         
 
-    pub fn addModel(&mut self, name: impl Into<String>, mut model: Box<dyn Model>) {
+    pub fn add_model(&mut self, name: impl Into<String>, model: Box<dyn Model>) {
         self.models.insert(name.into(), model);
     }
 
-    pub fn generateRandomPos(&mut self) {
+    pub fn generate_random_pos(&mut self) {
         self.random_pos_vector.clear();
-        for i in 0..10 {
+        for _ in 0..10 {
             self.random_pos_vector.push(self.spherical_rand(3.0));
         }
     }
@@ -201,13 +200,13 @@ impl Renderer {
 
             let axis = glm::vec3(1.0, 1.0, 0.0); // Y axis
 
-            self.M = glm::rotate(&self.M, 0.01, &axis);
+            self.m = glm::rotate(&self.m, 0.01, &axis);
             angle+=self.speed ;
-            self.V = glm::rotate(&self.V, angle, &glm::vec3(0.0,1.0,0.0));
+            self.v = glm::rotate(&self.v, angle, &glm::vec3(0.0,1.0,0.0));
             // self.V = glm::rotate(&self.V, (PI)+0.01, &axis);
-            gl::UniformMatrix4fv(self.shader.get_uniform_location("P"),1,gl::FALSE,self.P.as_ptr());
-            gl::UniformMatrix4fv(self.shader.get_uniform_location("V"),1,gl::FALSE,self.V.as_ptr());
-            gl::UniformMatrix4fv(self.shader.get_uniform_location("M"),1,gl::FALSE,self.M.as_ptr());
+            gl::UniformMatrix4fv(self.shader.get_uniform_location("P"),1,gl::FALSE,self.p.as_ptr());
+            gl::UniformMatrix4fv(self.shader.get_uniform_location("V"),1,gl::FALSE,self.v.as_ptr());
+            gl::UniformMatrix4fv(self.shader.get_uniform_location("M"),1,gl::FALSE,self.m.as_ptr());
             // gl::UniformMatrix4fv(spConstant.get_uniform_location("M"),1,gl::FALSE,M.as_ptr());
             gl::Uniform4f(self.shader.get_uniform_location("color") as GLint,1.0,1.0,1.0,1.0); 
 
@@ -225,17 +224,17 @@ impl Renderer {
 
         self.models.get_mut("ant").unwrap().draw_solid(false,&self.shader);
         for pos in &self.random_pos_vector {
-            let mut randM: glm::Mat4 = glm::identity(); 
-            randM = glm::translate(&randM, &pos);
+            let mut rand_m: glm::Mat4 = glm::identity(); 
+            rand_m = glm::translate(&rand_m, &pos);
 
             self.lambert.use_program();
             unsafe {
-                gl::UniformMatrix4fv(self.lambert.get_uniform_location("P"),1,gl::FALSE,self.P.as_ptr());
-                gl::UniformMatrix4fv(self.lambert.get_uniform_location("V"),1,gl::FALSE,self.V.as_ptr());
-                gl::UniformMatrix4fv(self.lambert.get_uniform_location("M"),1,gl::FALSE,randM.as_ptr());
+                gl::UniformMatrix4fv(self.lambert.get_uniform_location("P"),1,gl::FALSE,self.p.as_ptr());
+                gl::UniformMatrix4fv(self.lambert.get_uniform_location("V"),1,gl::FALSE,self.v.as_ptr());
+                gl::UniformMatrix4fv(self.lambert.get_uniform_location("M"),1,gl::FALSE,rand_m.as_ptr());
                 // gl::UniformMatrix4fv(spConstant.get_uniform_location("M"),1,gl::FALSE,M.as_ptr());
                 gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_2D, self.dirtTexture);
+                gl::BindTexture(gl::TEXTURE_2D, self.dirt_texture);
                 gl::Uniform1i(self.lambert.get_uniform_location("tex"),0);
 
                 gl::Uniform4f(self.lambert.get_uniform_location("color") as GLint,1.0,1.0,1.0,1.0); 
@@ -269,15 +268,5 @@ impl Renderer {
         unsafe {
             gl::Viewport(0, 0, width, height);
         }
-    }
-}
-
-
-
-
-pub fn get_gl_string(variant: gl::types::GLenum) -> Option<&'static CStr> {
-    unsafe {
-        let s = gl::GetString(variant);
-        (!s.is_null()).then(|| CStr::from_ptr(s.cast()))
     }
 }

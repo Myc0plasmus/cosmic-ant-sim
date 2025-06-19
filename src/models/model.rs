@@ -1,5 +1,3 @@
-use gl::types::*;
-
 use crate::shader::shaderprogram::ShaderProgram;
 
 #[derive(Clone)]

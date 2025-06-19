@@ -2,12 +2,10 @@ use gl::types::GLuint;
 use gl::types::GLenum;
 use gl::types::GLchar;
 use gl::types::GLint;
-use std::fs;
 use std::fs::read;
-use std::io::{self, Read};
 use std::path::Path;
 use std::ptr;
-use std::ffi::{CStr, CString};
+use std::ffi::{CString};
 
 pub struct ShaderProgram {
    shader_program : GLuint,
@@ -22,9 +20,9 @@ impl ShaderProgram {
     }
 
     pub fn new(vertex_path: &str, geometry_path: Option<&str>, fragment_path: &str) -> Self {
-        let vertex_shader = ShaderProgram::loadShader( gl::VERTEX_SHADER, vertex_path);
-        let geometry_shader = geometry_path.map(|path| ShaderProgram::loadShader(gl::GEOMETRY_SHADER, path));
-        let fragment_shader = ShaderProgram::loadShader(gl::FRAGMENT_SHADER, fragment_path);
+        let vertex_shader = ShaderProgram::load_shader( gl::VERTEX_SHADER, vertex_path);
+        let geometry_shader = geometry_path.map(|path| ShaderProgram::load_shader(gl::GEOMETRY_SHADER, path));
+        let fragment_shader = ShaderProgram::load_shader(gl::FRAGMENT_SHADER, fragment_path);
 
         let shader_program = unsafe { gl::CreateProgram() };
         unsafe {
@@ -55,7 +53,7 @@ impl ShaderProgram {
         }
     }
 
-    fn loadShader(shader_type : GLenum, file_name: &str) -> GLuint {
+    fn load_shader(shader_type : GLenum, file_name: &str) -> GLuint {
         let shader_source = read_file(file_name);
         let shader : GLuint;
 

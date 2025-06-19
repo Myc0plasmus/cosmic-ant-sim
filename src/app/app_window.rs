@@ -4,10 +4,10 @@ use std::num::NonZeroU32;
 
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::{Key, KeyCode, NamedKey, PhysicalKey};
+use winit::event_loop::{ActiveEventLoop};
+use winit::keyboard::{Key, NamedKey};
 use winit::raw_window_handle::HasWindowHandle;
-use winit::window::{Window, WindowAttributes, WindowId};
+use winit::window::{Window, WindowAttributes};
 
 use glutin::config::{Config, ConfigTemplateBuilder, GetGlConfig};
 use glutin::context::{
@@ -165,8 +165,8 @@ impl ApplicationHandler for App {
                 ..
             } if c.eq_ignore_ascii_case("r") => {
 
-                let mut renderer = self.renderer.as_mut().unwrap();
-                renderer.generateRandomPos();
+                let renderer = self.renderer.as_mut().unwrap();
+                renderer.generate_random_pos();
 
             },
             WindowEvent::KeyboardInput {
@@ -174,7 +174,7 @@ impl ApplicationHandler for App {
                 ..
             } if s.eq_ignore_ascii_case("s") => {
 
-                let mut renderer = self.renderer.as_mut().unwrap();
+                let renderer = self.renderer.as_mut().unwrap();
                 renderer.speed = 0.0;
 
             },
@@ -183,7 +183,7 @@ impl ApplicationHandler for App {
                 ..
             } => {
 
-                let mut renderer = self.renderer.as_mut().unwrap();
+                let renderer = self.renderer.as_mut().unwrap();
                 renderer.speed = 0.05;
 
             },
@@ -192,7 +192,7 @@ impl ApplicationHandler for App {
                 ..
             } => {
 
-                let mut renderer = self.renderer.as_mut().unwrap();
+                let renderer = self.renderer.as_mut().unwrap();
                 renderer.speed = -0.05;
 
             },
@@ -202,9 +202,9 @@ impl ApplicationHandler for App {
                 ..
             } => {
 
-                let mut renderer = self.renderer.as_mut().unwrap();
+                let renderer = self.renderer.as_mut().unwrap();
                 renderer.zoom += 0.1;
-                renderer.changeCameraZoom();
+                renderer.change_camera_zoom();
 
             },
             WindowEvent::KeyboardInput {
@@ -212,9 +212,9 @@ impl ApplicationHandler for App {
                 ..
             } => {
 
-                let mut renderer = self.renderer.as_mut().unwrap();
+                let renderer = self.renderer.as_mut().unwrap();
                 renderer.zoom -= 0.1;
-                renderer.changeCameraZoom();
+                renderer.change_camera_zoom();
 
             },
             WindowEvent::CloseRequested
@@ -235,13 +235,13 @@ impl ApplicationHandler for App {
 
         // Clear the window.
         self.state = None;
-        #[cfg(egl_backend)]
-        #[allow(irrefutable_let_patterns)]
-        if let glutin::display::Display::Egl(display) = _gl_display {
-            unsafe {
-                display.terminate();
-            }
-        }
+        // #[cfg(egl_backend)]
+        // #[allow(irrefutable_let_patterns)]
+        // if let glutin::display::Display::Egl(display) = _gl_display {
+        //     unsafe {
+        //         display.terminate();
+        //     }
+        // }
     }
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {

@@ -11,13 +11,11 @@ mod utils;
 mod app;
 
 
-use utils::constants::*;
 
 
 use winit::event_loop::{ControlFlow, EventLoop};
-use glutin::config::{Config, ConfigTemplateBuilder, GetGlConfig};
-use winit::window::{Window, WindowAttributes, WindowId};
-use glutin_winit::{DisplayBuilder, GlWindow};
+use glutin::config::{ConfigTemplateBuilder};
+use glutin_winit::{DisplayBuilder};
 
 
 fn main() {
@@ -40,7 +38,7 @@ fn main() {
     let display_builder = DisplayBuilder::new().with_window_attributes(Some(window_attributes()));
 
     let mut app = App::new(template, display_builder);
-    event_loop.run_app(&mut app);
+    let _ = event_loop.run_app(&mut app);
 
     // app.exit_state
 }

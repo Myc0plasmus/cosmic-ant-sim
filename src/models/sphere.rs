@@ -1,7 +1,6 @@
 use std::ptr;
 
 use gl::types::*;
-use nalgebra_glm::round;
 use nalgebra_glm as glm;
 use crate::shader::shaderprogram::ShaderProgram;
 use crate::utils::constants::*;
@@ -201,8 +200,8 @@ impl Sphere {
         let mult_alpha: f32 = 360.0/tube_divs;
         let mult_beta: f32 = 360.0/main_divs;
 
-        for alpha_it in (0..tube_divs.round() as i32) {
-            for beta_it in (0..main_divs.round() as i32) {
+        for alpha_it in 0..tube_divs.round() as i32 {
+            for beta_it in 0..main_divs.round() as i32 {
                 let alpha = alpha_it as f32;
                 let beta = beta_it as f32;
                 self.generate_sphere_face(&mut face,&mut face_vertex_normals,&mut normal,r,alpha*mult_alpha-90.0,beta*mult_beta, mult_alpha,mult_beta);
@@ -223,7 +222,7 @@ impl Sphere {
                 self.internal_vertex_normals.push(face_vertex_normals[2]);
                 self.internal_vertex_normals.push(face_vertex_normals[3]);
 
-                for i in (0..6) {
+                for _ in 0..6 {
                     self.internal_face_normals.push(normal);
                 }
 
@@ -254,11 +253,7 @@ impl Sphere {
 
 }
 
-fn flatten_vec4(vecs: &Vec<glm::Vec4>) -> Vec<f32> {
-    vecs.iter()
-        .flat_map(|v| vec![v.x, v.y, v.z, v.w])
-        .collect()
-}
+
 
 
 

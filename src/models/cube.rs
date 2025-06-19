@@ -2,7 +2,6 @@ use crate::shader::shaderprogram::ShaderProgram;
 
 use super::model::*;
 use gl::types::GLuint;
-use nalgebra_glm as glm;
 use std::ptr;
 
 pub const CUBE_VERTEX_COUNT: usize = 36;
