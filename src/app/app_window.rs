@@ -1,7 +1,9 @@
 use super::renderer::Renderer;
 use std::error::Error;
 use std::num::NonZeroU32;
+use std::sync::Arc;
 
+use egui_winit::pixels_per_point;
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop};
@@ -34,6 +36,9 @@ pub struct App {
     gl_context: Option<PossiblyCurrentContext>,
     gl_display: GlDisplayCreationState,
     exit_state: Result<(), Box<dyn Error>>,
+    egui_ctx: Option<egui::Context>,
+    egui_state: Option<egui_winit::State>,
+    egui_painter: Option<egui_glow::Painter>,
 }
 
 impl App {
@@ -45,6 +50,9 @@ impl App {
             gl_context: None,
             state: None,
             renderer: None,
+            egui_ctx: None,
+            egui_state: None,
+            egui_painter: None, 
         }
     }
 }
@@ -107,6 +115,27 @@ impl ApplicationHandler for App {
         let gl_context = self.gl_context.as_ref().unwrap();
         gl_context.make_current(&gl_surface).unwrap();
 
+        //egui
+        let egui_ctx = egui::Context::default();
+        let egui_state = egui_winit::State::new(
+            egui_ctx.clone(),
+            egui::ViewportId::ROOT,
+            &window, // implements HasDisplayHandle
+            Some(window.scale_factor() as f32),
+            None,
+            None,
+        );
+        let glow_ctx = unsafe {
+            Arc::new(glow::Context::from_loader_function(|s| {
+                gl_config.display().get_proc_address(&std::ffi::CString::new(s).unwrap()) as *const _
+            }))
+        };
+        let egui_painter = egui_glow::Painter::new(glow_ctx, "", None, false).expect("Failed to initialize egui_glow::Painter");
+
+        self.egui_ctx = Some(egui_ctx);
+        self.egui_state = Some(egui_state);
+        self.egui_painter = Some(egui_painter);
+
         self.renderer.get_or_insert_with(|| Renderer::new(&gl_config.display()));
 
 
@@ -161,7 +190,7 @@ impl ApplicationHandler for App {
                 }
             },
             WindowEvent::KeyboardInput {
-                event: KeyEvent { logical_key: Key::Character(c), state: ElementState::Pressed, ..},
+                event: KeyEvent { logical_key: Key::Character(ref c), state: ElementState::Pressed, ..},
                 ..
             } if c.eq_ignore_ascii_case("r") => {
 
@@ -170,7 +199,7 @@ impl ApplicationHandler for App {
 
             },
             WindowEvent::KeyboardInput {
-                event: KeyEvent { logical_key: Key::Character(s), state: ElementState::Pressed, ..},
+                event: KeyEvent { logical_key: Key::Character(ref s), state: ElementState::Pressed, ..},
                 ..
             } if s.eq_ignore_ascii_case("s") => {
 
@@ -225,6 +254,11 @@ impl ApplicationHandler for App {
             _ => (),
 
         }
+        if let (Some(AppState { window, .. }), Some(egui_state), Some(egui_ctx)) =
+            (self.state.as_ref(), &mut self.egui_state, &self.egui_ctx)
+        {
+            let _ = egui_state.on_window_event(window, &event);
+        }
     }
 
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
@@ -248,7 +282,51 @@ impl ApplicationHandler for App {
         if let Some(AppState { gl_surface, window }) = self.state.as_ref() {
             let gl_context = self.gl_context.as_ref().unwrap();
             let renderer = self.renderer.as_mut().unwrap();
+
             renderer.draw();
+
+            let mut trigger_reset = false;
+            let mut speed = renderer.speed;
+            if let (
+                Some(AppState { gl_surface, window }),
+                Some(egui_ctx),
+                Some(egui_state),
+                Some(egui_painter),
+            ) = (
+                self.state.as_ref(),
+                self.egui_ctx.as_ref(),
+                self.egui_state.as_mut(),
+                self.egui_painter.as_mut(),
+            ) {
+                let raw_input = egui_state.take_egui_input(window);
+
+                let full_output = egui_ctx.run(raw_input, |ctx| {
+                    egui::SidePanel::right("side_panel").show(ctx, |ui| {
+                        ui.heading("Sidebar Controls");
+                        if ui.button("Reset Position (R)").clicked() {
+                            trigger_reset = true;
+                        }
+                        ui.label(format!("Speed: {}", speed));
+                    });
+                });
+
+
+                egui_state.handle_platform_output(window, full_output.platform_output.clone());
+
+                let screen_size = window.inner_size();
+                let pixels_per_point = pixels_per_point(egui_ctx, &window);
+                let clipped_primitives = egui_ctx.tessellate(full_output.shapes, pixels_per_point);
+                let textures_delta = &full_output.textures_delta;
+                egui_painter.paint_and_update_textures(
+                    [screen_size.width, screen_size.height],
+                    pixels_per_point,
+                    clipped_primitives.as_slice(),
+                    textures_delta,
+                );
+            }
+            if trigger_reset {
+                renderer.generate_random_pos();
+            }
             window.request_redraw();
 
             gl_surface.swap_buffers(gl_context).unwrap();
